@@ -1,0 +1,39 @@
+:root {
+  --felt: #1f5f3f;
+  --felt-dark: #123a29;
+  --ink: #f4f1e8;
+  --muted: #b9cdbf;
+  --card: #fffdf6;
+  --card-edge: #d8d2bf;
+  --back: #8b2c3b;
+  --back-dark: #6f2230;
+  --gold: #f2c14e;
+  --hint: #6ec6ff;
+  --danger: #e2574c;
+  --card-w: clamp(50px, 15.5vw, 96px);
+  --gap: clamp(6px, 2vw, 14px);
+
+  font: 16px/1.45 system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 50% 25%, var(--felt), var(--felt-dark)) fixed;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 25%, var(--felt), var(--felt-dark)) fixed;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--hint);
+  outline-offset: 2px;
+}
+
+h1, h2 { margin: 0; }
