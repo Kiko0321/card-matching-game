@@ -278,7 +278,27 @@ button.danger {
 
 .card.pile:disabled { opacity: 0.35; }
 .card.pile:not(:disabled) { cursor: pointer; }
-.card.nudge { animation: nudge 1.4s ease-in-out infinite; }
+.card.nudge,
+.recycle.nudge { animation: nudge 1.4s ease-in-out infinite; }
+
+.recycle {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  border: 2px dashed var(--gold);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.recycle:hover { background: rgba(242, 193, 78, 0.15); }
+.recycle-icon { font-size: calc(var(--card-w) * 0.38); line-height: 1; }
 
 .rules {
   margin-top: 12px;

@@ -165,8 +165,22 @@ describe('remaining cards', () => {
     expect(allCards(game)).toHaveLength(DECK_SIZE)
   })
 
-  it('does nothing when the draw pile is empty', () => {
-    const empty = { ...start, draw: [] }
+  it('turns the drawn cards back over when the remaining pile is empty', () => {
+    let game = start
+    for (let i = 0; i < start.draw.length; i++) game = drawCard(game)
+    expect(game.draw).toHaveLength(0)
+    expect(game.waste).toHaveLength(start.draw.length)
+
+    const recycled = drawCard(game)
+    expect(recycled.event?.kind).toBe('recycle')
+    expect(recycled.waste).toHaveLength(0)
+    // Same cards, drawn again in the same order.
+    expect(recycled.draw).toEqual(start.draw)
+    expect(drawCard(recycled).waste).toEqual([start.draw.at(-1)])
+  })
+
+  it('does nothing when both piles are empty', () => {
+    const empty = { ...start, draw: [], waste: [] }
     expect(drawCard(empty)).toBe(empty)
   })
 })
@@ -187,8 +201,12 @@ describe('game end', () => {
     const noPairs: Game = { ...start, draw: kings, board: start.board.map((row, r) => (r === 2 ? row.map(() => []) : row)) }
     expect(status(noPairs)).toBe('stuck')
     expect(drawCard(noPairs)).toBe(noPairs)
-    // One useful card left in the draw pile keeps the game going.
-    expect(status({ ...noPairs, draw: [...kings, { id: 99, rank: 1, suit: 3 }] })).toBe('playing')
+    // Kings in the drawn pile can't help either.
+    expect(status({ ...noPairs, draw: [], waste: kings })).toBe('stuck')
+    // One useful card left in either pile keeps the game going, even buried in the drawn pile.
+    const useful = { id: 99, rank: 1, suit: 3 }
+    expect(status({ ...noPairs, draw: [...kings, useful] })).toBe('playing')
+    expect(status({ ...noPairs, draw: [], waste: [useful, ...kings] })).toBe('playing')
   })
 
   it('keeps playing while a match is still available', () => {

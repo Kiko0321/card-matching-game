@@ -38,6 +38,7 @@ function statusMessage(game: Game, hint: [Source, Source] | null): string {
   }
   if (e?.kind === 'resolve' && e.bonus) return `Position cleared: +${e.bonus.toLocaleString()}`
   if (hint) return 'Hint: the highlighted cards match.'
+  if (!findMatch(game) && !game.draw.length) return 'No matches — turn over the drawn cards to draw them again.'
   if (!findMatch(game)) return 'No matches available — draw a card.'
   return 'Select two cards with the same number.'
 }
@@ -70,7 +71,7 @@ export default function App() {
     if (!e || e === lastEvent.current) return
     lastEvent.current = e
     if (muted) return
-    if (e.kind === 'select' || e.kind === 'draw') playSound('flip')
+    if (e.kind === 'select' || e.kind === 'draw' || e.kind === 'recycle') playSound('flip')
     else if (e.kind === 'match') playSound('match')
     else if (e.bonus >= MIDDLE_BONUS) playSound('big')
     else if (e.unlocked.length) playSound('unlock')
@@ -132,7 +133,7 @@ export default function App() {
       <DrawArea
         game={game}
         hint={hint}
-        nudge={!over && !game.matching && !anyMatch && game.draw.length > 0}
+        nudge={!over && !game.matching && !anyMatch}
         onDraw={onDraw}
         onSelect={onSelect}
       />
@@ -140,7 +141,7 @@ export default function App() {
       <footer className="rules">
         Match two exposed cards with the same number (A–K, any suit). Clearing a top or bottom position scores 1,000.
         When both outer positions in a column are cleared, its middle position unlocks — clearing it scores 10,000.
-        Draw from the remaining cards when you need a new match. A drawn card that isn't matched disappears when you draw the next one.
+        Draw from the remaining cards when you need a new match. Only the top drawn card can be used. When the remaining pile is empty, click it to turn the drawn cards over and draw them again.
       </footer>
 
       {over && !resultHidden && (

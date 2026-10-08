@@ -19,7 +19,7 @@ export type Source = ({ kind: 'board' } & Position) | { kind: 'waste' }
 
 export type GameEvent = {
   id: number
-  kind: 'select' | 'draw' | 'match' | 'resolve'
+  kind: 'select' | 'draw' | 'recycle' | 'match' | 'resolve'
   /** Points earned by this event (only on 'resolve'). */
   bonus: number
   /** Columns whose middle position just unlocked. */
@@ -30,7 +30,7 @@ export type Game = {
   board: Stack[][]
   /** Face-down remaining cards; the last element is drawn next. */
   draw: Card[]
-  /** Drawn cards; only the last one is playable, earlier ones have disappeared. */
+  /** Drawn cards, face up; only the last one is playable. */
   waste: Card[]
   selected: Source | null
   /** A successful match waiting to be removed. All input is ignored meanwhile. */
@@ -107,20 +107,20 @@ export function findMatch(game: Game): [Source, Source] | null {
 }
 
 /**
- * True when some remaining card could still match an exposed board card.
- * Without a match the board never changes, and each draw covers the previous
- * drawn card, so drawn cards can only ever pair with today's exposed board cards.
+ * True when some card in the remaining or drawn pile could still match an exposed
+ * board card. Without a match the board never changes, and only one drawn card is
+ * playable at a time, so pile cards can only ever pair with today's exposed board cards.
  */
-function drawCanHelp(game: Game): boolean {
+function pilesCanHelp(game: Game): boolean {
   const exposed = new Set(availableSources(game).filter(s => s.kind === 'board').map(s => cardAt(game, s)!.rank))
-  return game.draw.some(card => exposed.has(card.rank))
+  return [...game.draw, ...game.waste].some(card => exposed.has(card.rank))
 }
 
-/** The game ends as soon as no match is possible, now or from any remaining card. */
+/** The game ends as soon as no match is possible, now or from any card left in the piles. */
 export function status(game: Game): Status {
   if (game.matching) return 'playing'
   if (game.board.every(row => row.every(stack => stack.length === 0))) return 'won'
-  if (!findMatch(game) && !drawCanHelp(game)) return 'stuck'
+  if (!findMatch(game) && !pilesCanHelp(game)) return 'stuck'
   return 'playing'
 }
 
@@ -163,12 +163,23 @@ export function resolveMatch(game: Game): Game {
 }
 
 /**
- * Remaining-card rule (GAME-019/020): drawing turns the next remaining card
- * face up. If the previous drawn card was not matched, it disappears; only the
- * newest drawn card can ever be matched.
+ * Remaining-card rule (GAME-019/020): drawing turns the next remaining card face
+ * up on the drawn pile, covering the previous one; only the top drawn card can be
+ * matched. When the remaining pile is empty, clicking it turns the drawn pile back
+ * over so the same cards can be drawn again in the same order (no limit).
  */
 export function drawCard(game: Game): Game {
-  if (game.matching || isOver(game) || !game.draw.length) return game
+  if (game.matching || isOver(game)) return game
+  if (!game.draw.length) {
+    if (!game.waste.length) return game
+    return {
+      ...game,
+      draw: [...game.waste].reverse(),
+      waste: [],
+      selected: game.selected?.kind === 'waste' ? null : game.selected,
+      event: withEvent(game, 'recycle'),
+    }
+  }
   return {
     ...game,
     draw: game.draw.slice(0, -1),
