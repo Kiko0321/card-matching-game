@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { Board } from './components/Board'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { DrawArea } from './components/DrawArea'
+import { HelpDialog } from './components/HelpDialog'
 import { ResultModal } from './components/ResultModal'
 import { ScoreBoard } from './components/ScoreBoard'
 import { appReducer, hasProgress, type AppState } from './game/appState'
@@ -17,7 +18,7 @@ import {
 } from './game/rules'
 import { playSound } from './game/sound'
 import { isGoodResult } from './game/stats'
-import { browserStore, loadGame, loadMuted, loadStats, saveGame, saveMuted, saveStats } from './game/storage'
+import { browserStore, loadGame, loadHelpSeen, loadMuted, loadStats, saveGame, saveHelpSeen, saveMuted, saveStats } from './game/storage'
 import './App.css'
 
 const store = browserStore()
@@ -47,6 +48,7 @@ export default function App() {
   const [{ game, stats }, dispatch] = useReducer(appReducer, undefined, init)
   const [hint, setHint] = useState<[Source, Source] | null>(null)
   const [muted, setMuted] = useState(() => loadMuted(store))
+  const [helpOpen, setHelpOpen] = useState(() => !loadHelpSeen(store))
   const [confirming, setConfirming] = useState(false)
   const [resultHidden, setResultHidden] = useState(false)
 
@@ -104,6 +106,10 @@ export default function App() {
   }
   const cancelConfirm = useCallback(() => setConfirming(false), [])
   const hideResult = useCallback(() => setResultHidden(true), [])
+  const closeHelp = useCallback(() => {
+    setHelpOpen(false)
+    saveHelpSeen(store)
+  }, [])
 
   const anyMatch = findMatch(game)
 
@@ -119,6 +125,7 @@ export default function App() {
           <button type="button" onClick={() => setMuted(m => !m)} aria-pressed={muted} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? '🔇' : '🔊'}
           </button>
+          <button type="button" onClick={() => setHelpOpen(true)} aria-label="How to play">?</button>
           {over && resultHidden && (
             <button type="button" onClick={() => setResultHidden(false)}>Result</button>
           )}
@@ -138,16 +145,11 @@ export default function App() {
         onSelect={onSelect}
       />
 
-      <footer className="rules">
-        Match two exposed cards with the same number (A–K, any suit). Clearing a top or bottom position scores 1,000.
-        When both outer positions in a column are cleared, its middle position unlocks — clearing it scores 10,000.
-        Draw from the remaining cards when you need a new match. Only the top drawn card can be used. When the remaining pile is empty, click it to turn the drawn cards over and draw them again.
-      </footer>
-
       {over && !resultHidden && (
         <ResultModal score={score} won={state === 'won'} stats={stats} onNewGame={startNewGame} onClose={hideResult} />
       )}
       {confirming && <ConfirmDialog onConfirm={startNewGame} onCancel={cancelConfirm} />}
+      {helpOpen && <HelpDialog onClose={closeHelp} />}
     </main>
   )
 }

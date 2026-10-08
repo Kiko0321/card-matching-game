@@ -7,6 +7,7 @@ export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const GAME_KEY = 'stack-match:game:v1'
 const STATS_KEY = 'stack-match:stats:v1'
 const MUTED_KEY = 'stack-match:muted:v1'
+const HELP_SEEN_KEY = 'stack-match:help-seen:v1'
 
 /** localStorage, or null when it is unavailable (private mode, blocked site data). */
 export function browserStore(): KeyValueStore | null {
@@ -106,3 +107,7 @@ export const saveStats = (store: KeyValueStore | null, stats: Stats) => write(st
 
 export const loadMuted = (store: KeyValueStore | null) => read(store, MUTED_KEY) === true
 export const saveMuted = (store: KeyValueStore | null, muted: boolean) => write(store, MUTED_KEY, muted)
+
+/** Whether the How to play guide has been shown once (it opens automatically on first launch). */
+export const loadHelpSeen = (store: KeyValueStore | null) => read(store, HELP_SEEN_KEY) === true
+export const saveHelpSeen = (store: KeyValueStore | null) => write(store, HELP_SEEN_KEY, true)
