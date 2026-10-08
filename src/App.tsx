@@ -151,7 +151,7 @@ export default function App() {
       <footer className="rules">
         Match two exposed cards with the same number (A–K, any suit). Clearing a top or bottom position scores 1,000.
         When both outer positions in a column are cleared, its middle position unlocks — clearing it scores 10,000.
-        Draw from the remaining cards when you need a new match. Only the top drawn card can be used. When the remaining pile is empty, click it to turn the drawn cards over and draw them again.
+        Draw from the remaining cards when you need a new match. Only the top drawn card can be used. When the remaining pile is empty, click it to turn the drawn cards over and draw them again (3 times per game).
       </footer>
 
       {over && !resultHidden && (

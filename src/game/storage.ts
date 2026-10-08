@@ -1,5 +1,5 @@
 import { COPIES_PER_RANK, DECK_SIZE, RANKS, SUITS } from './deck'
-import { COLS, ROWS, STACK_SIZE, resolveMatch, type Card, type Game, type Source } from './rules'
+import { COLS, MAX_TURN_OVERS, ROWS, STACK_SIZE, resolveMatch, type Card, type Game, type Source } from './rules'
 import { EMPTY_STATS, type Stats } from './stats'
 
 export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
@@ -84,6 +84,8 @@ export function parseGame(v: unknown): Game | null {
     board,
     draw,
     waste,
+    // Saves from before the turn-over limit have no count; treat them as unused.
+    turnOvers: isIndex(v.turnOvers, MAX_TURN_OVERS + 1) ? v.turnOvers : 0,
     selected: parseSource(v.selected),
     matching: matching?.length === 2 && matching[0] && matching[1] ? [matching[0], matching[1]] : null,
     event: null,

@@ -1,5 +1,5 @@
 import { cardName } from '../game/deck'
-import { sameSource, type Game, type Source } from '../game/rules'
+import { sameSource, turnOversLeft, type Game, type Source } from '../game/rules'
 import { PlayingCard } from './PlayingCard'
 
 type Props = {
@@ -16,7 +16,8 @@ const WASTE: Source = { kind: 'waste' }
 export function DrawArea({ game, hint, nudge, onDraw, onSelect }: Props) {
   const top = game.waste.at(-1)
   // An empty remaining pile turns the drawn cards back over.
-  const canRecycle = game.draw.length === 0 && game.waste.length > 0
+  const turnsLeft = turnOversLeft(game)
+  const canRecycle = game.draw.length === 0 && game.waste.length > 0 && turnsLeft > 0
 
   return (
     <section className="draw-area" aria-label="Remaining cards">
@@ -26,10 +27,11 @@ export function DrawArea({ game, hint, nudge, onDraw, onSelect }: Props) {
             type="button"
             className={nudge ? 'recycle nudge' : 'recycle'}
             onClick={onDraw}
-            aria-label={`Turn over the ${game.waste.length} drawn cards to draw them again`}
+            aria-label={`Turn over the ${game.waste.length} drawn cards to draw them again, ${turnsLeft} of 3 turn-overs left`}
           >
             <span className="recycle-icon" aria-hidden>↻</span>
             <span>Turn over</span>
+            <span className="recycle-left">{turnsLeft} left</span>
           </button>
         ) : (
           <PlayingCard
@@ -44,7 +46,9 @@ export function DrawArea({ game, hint, nudge, onDraw, onSelect }: Props) {
             <span className="count">{game.draw.length}</span>
           </PlayingCard>
         )}
-        <span className="pile-caption">Remaining</span>
+        <span className="pile-caption">
+          Remaining · <span title="Turn-overs left">↻ {turnsLeft}</span>
+        </span>
       </div>
       <div className="pile-col">
         {top ? (
