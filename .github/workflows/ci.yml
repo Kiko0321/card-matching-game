@@ -1,0 +1,60 @@
+name: CI
+
+# Branch flow: feature branches → PR into dev → PR from dev into main (release).
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Releases into main must come from dev.
+  release-source:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require dev as the source branch
+        if: github.head_ref != 'dev'
+        run: |
+          echo "::error::Pull requests into main must come from dev (this one is from '${{ github.head_ref }}'). Merge into dev first."
+          exit 1
+      - run: echo "Source branch is dev."
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  # Release candidates also get a Windows build, downloadable from the run's Artifacts.
+  windows-package:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stack-match-windows
+          path: release/*.exe
+          if-no-files-found: error

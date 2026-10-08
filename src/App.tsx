@@ -2,8 +2,10 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { Board } from './components/Board'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { DrawArea } from './components/DrawArea'
+import { HelpDialog } from './components/HelpDialog'
 import { ResultModal } from './components/ResultModal'
 import { ScoreBoard } from './components/ScoreBoard'
+import { SettingsDialog } from './components/SettingsDialog'
 import { appReducer, hasProgress, type AppState } from './game/appState'
 import {
   MATCH_DELAY_MS,
@@ -17,16 +19,30 @@ import {
 } from './game/rules'
 import { playSound } from './game/sound'
 import { isGoodResult } from './game/stats'
-import { browserStore, loadGame, loadMuted, loadStats, saveGame, saveMuted, saveStats } from './game/storage'
+import {
+  browserStore,
+  loadGame,
+  loadHelpSeen,
+  loadMuted,
+  loadSettings,
+  loadStats,
+  saveGame,
+  saveHelpSeen,
+  saveMuted,
+  saveSettings,
+  saveStats,
+} from './game/storage'
 import './App.css'
 
 const store = browserStore()
+/** How long the player must be idle with no match before the draw pile is suggested. */
+const DRAW_HINT_DELAY_MS = 5_000
 
 function init(): AppState {
   return { game: loadGame(store) ?? newGame(), stats: loadStats(store) }
 }
 
-function statusMessage(game: Game, hint: [Source, Source] | null): string {
+function statusMessage(game: Game, hint: [Source, Source] | null, showDrawHint: boolean): string {
   const state = status(game)
   if (state === 'won') return 'Board cleared — perfect game!'
   if (state === 'stuck') return 'No more matching cards — game over.'
@@ -38,8 +54,8 @@ function statusMessage(game: Game, hint: [Source, Source] | null): string {
   }
   if (e?.kind === 'resolve' && e.bonus) return `Position cleared: +${e.bonus.toLocaleString()}`
   if (hint) return 'Hint: the highlighted cards match.'
-  if (!findMatch(game) && !game.draw.length) return 'No matches — turn over the drawn cards to draw them again.'
-  if (!findMatch(game)) return 'No matches available — draw a card.'
+  if (showDrawHint && !game.draw.length) return 'No matches — turn over the drawn cards to draw them again.'
+  if (showDrawHint) return 'No matches available — draw a card.'
   return 'Select two cards with the same number.'
 }
 
@@ -47,8 +63,13 @@ export default function App() {
   const [{ game, stats }, dispatch] = useReducer(appReducer, undefined, init)
   const [hint, setHint] = useState<[Source, Source] | null>(null)
   const [muted, setMuted] = useState(() => loadMuted(store))
+  const [settings, setSettings] = useState(() => loadSettings(store))
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(() => !loadHelpSeen(store))
   const [confirming, setConfirming] = useState(false)
   const [resultHidden, setResultHidden] = useState(false)
+  // The game state that has sat untouched for DRAW_HINT_DELAY_MS.
+  const [idleGame, setIdleGame] = useState<Game | null>(null)
 
   const state = status(game)
   const over = state !== 'playing'
@@ -57,6 +78,21 @@ export default function App() {
   useEffect(() => saveGame(store, game), [game])
   useEffect(() => saveStats(store, stats), [stats])
   useEffect(() => saveMuted(store, muted), [muted])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIdleGame(game), DRAW_HINT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [game])
+
+  // Settings are applied as attributes on <html>, which the stylesheets key off.
+  useEffect(() => {
+    saveSettings(store, settings)
+    const root = document.documentElement.dataset
+    root.cardStyle = settings.cardStyle
+    root.cardBack = settings.cardBack
+    root.table = settings.table
+    root.animations = settings.animations ? 'on' : 'off'
+  }, [settings])
 
   // Matched cards animate first; input is blocked by the rules until they are removed.
   useEffect(() => {
@@ -104,8 +140,14 @@ export default function App() {
   }
   const cancelConfirm = useCallback(() => setConfirming(false), [])
   const hideResult = useCallback(() => setResultHidden(true), [])
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
+  const closeHelp = useCallback(() => {
+    setHelpOpen(false)
+    saveHelpSeen(store)
+  }, [])
 
   const anyMatch = findMatch(game)
+  const showDrawHint = idleGame === game && !over && !game.matching && !anyMatch
 
   return (
     <main className="app">
@@ -119,6 +161,8 @@ export default function App() {
           <button type="button" onClick={() => setMuted(m => !m)} aria-pressed={muted} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? '🔇' : '🔊'}
           </button>
+          <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Settings">⚙</button>
+          <button type="button" onClick={() => setHelpOpen(true)} aria-label="How to play">?</button>
           {over && resultHidden && (
             <button type="button" onClick={() => setResultHidden(false)}>Result</button>
           )}
@@ -126,28 +170,32 @@ export default function App() {
         </div>
       </header>
 
-      <p className="message" role="status">{statusMessage(game, hint)}</p>
+      <p className="message" role="status">{statusMessage(game, hint, showDrawHint)}</p>
 
       <Board game={game} hint={hint} onSelect={onSelect} />
 
       <DrawArea
         game={game}
         hint={hint}
-        nudge={!over && !game.matching && !anyMatch}
+        nudge={showDrawHint}
         onDraw={onDraw}
         onSelect={onSelect}
       />
-
-      <footer className="rules">
-        Match two exposed cards with the same number (A–K, any suit). Clearing a top or bottom position scores 1,000.
-        When both outer positions in a column are cleared, its middle position unlocks — clearing it scores 10,000.
-        Draw from the remaining cards when you need a new match. Only the top drawn card can be used. When the remaining pile is empty, click it to turn the drawn cards over and draw them again.
-      </footer>
 
       {over && !resultHidden && (
         <ResultModal score={score} won={state === 'won'} stats={stats} onNewGame={startNewGame} onClose={hideResult} />
       )}
       {confirming && <ConfirmDialog onConfirm={startNewGame} onCancel={cancelConfirm} />}
+      {settingsOpen && (
+        <SettingsDialog
+          settings={settings}
+          muted={muted}
+          onChange={setSettings}
+          onMutedChange={setMuted}
+          onClose={closeSettings}
+        />
+      )}
+      {helpOpen && <HelpDialog onClose={closeHelp} />}
     </main>
   )
 }

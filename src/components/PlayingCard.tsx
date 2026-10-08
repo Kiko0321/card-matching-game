@@ -22,6 +22,7 @@ export function PlayingCard({ card, faceUp, depth = 0, selected, matched, hinted
     'card',
     faceUp ? 'face-up' : 'face-down',
     faceUp && card && isRed(card) && 'red',
+    faceUp && card && `suit-${card.suit}`,
     selected && 'selected',
     matched && 'matched',
     hinted && 'hinted',

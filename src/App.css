@@ -114,7 +114,7 @@ button.danger {
 .board {
   display: grid;
   grid-template-columns: repeat(5, var(--card-w));
-  gap: calc(var(--gap) + 14px) var(--gap);
+  gap: var(--gap);
   justify-content: center;
 }
 
@@ -122,21 +122,6 @@ button.danger {
   position: relative;
   width: var(--card-w);
   aspect-ratio: 5 / 7;
-}
-
-.value {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 2px);
-  text-align: center;
-  font-size: 0.68rem;
-  color: var(--muted);
-}
-
-.middle .value {
-  color: var(--gold);
-  font-weight: 700;
 }
 
 .cleared {
@@ -149,15 +134,14 @@ button.danger {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 1.3rem;
   color: var(--gold);
   text-align: center;
   animation: pop-in 0.35s ease;
 }
 
-.cleared span:first-child { font-size: 1.3rem; }
-
 .cleared.empty {
+  font-size: 0.75rem;
   border-color: rgba(255, 255, 255, 0.25);
   color: var(--muted);
   animation: none;
@@ -200,10 +184,10 @@ button.danger {
 
 .card.face-down {
   background: repeating-linear-gradient(45deg, var(--back), var(--back) 6px, var(--back-dark) 6px, var(--back-dark) 12px);
-  border-color: #4f1520;
+  border-color: var(--back-dark);
   color: #fff;
   box-shadow:
-    calc(var(--depth) * 2px) calc(var(--depth) * 3px) 0 -1px #4f1520,
+    calc(var(--depth) * 2px) calc(var(--depth) * 3px) 0 -1px var(--back-dark),
     0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
@@ -299,12 +283,33 @@ button.danger {
 
 .recycle:hover { background: rgba(242, 193, 78, 0.15); }
 .recycle-icon { font-size: calc(var(--card-w) * 0.38); line-height: 1; }
+.recycle-left { font-weight: 400; color: var(--muted); }
 
-.rules {
-  margin-top: 12px;
-  font-size: 0.82rem;
-  color: var(--muted);
-  text-align: center;
+.help {
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  margin: 8px 0 16px;
+  padding-right: 4px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.help h3 {
+  margin: 12px 0 4px;
+  font-size: 0.95rem;
+  color: #1f5f3f;
+}
+
+.help section:first-child h3 { margin-top: 0; }
+.help p, .help ul { margin: 0; }
+.help ul { padding-left: 20px; }
+.help li { margin: 2px 0; }
+
+.help-tip {
+  margin-top: 14px !important;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff3cf;
 }
 
 /* ---------- Modals ---------- */
@@ -418,6 +423,86 @@ button.danger {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); box-shadow: 0 0 16px rgba(242, 193, 78, 0.8); }
 }
+
+/* ---------- Settings: card style & animations ---------- */
+
+:root[data-card-style='large'] .rank { font-size: calc(var(--card-w) * 0.5); }
+:root[data-card-style='large'] .suit { font-size: calc(var(--card-w) * 0.2); }
+:root[data-card-style='four-color'] .card.suit-2 .face { color: #1565c0; }
+:root[data-card-style='four-color'] .card.suit-3 .face { color: #2e7d32; }
+
+:root[data-animations='off'] *,
+:root[data-animations='off'] *::before,
+:root[data-animations='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ---------- Settings dialog ---------- */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 8px 0 18px;
+  text-align: left;
+}
+
+.setting {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.setting legend {
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #777;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #d8d2bf;
+  background: #f6f1e5;
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.choice.active {
+  border-color: #b8860b;
+  background: #fff3cf;
+  font-weight: 700;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.toggle input { width: 18px; height: 18px; accent-color: #b8860b; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

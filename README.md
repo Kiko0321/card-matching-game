@@ -11,7 +11,7 @@ A card-matching game built with React, TypeScript and Vite. It runs as a Windows
 - Clearing a top or bottom position scores **1,000**.
 - When both outer positions in a column are cleared, that column's middle position unlocks. Clearing it scores **10,000**.
 - When no match is showing, draw from the remaining cards. Each drawn card covers the previous one, and only the top drawn card can be used.
-- When the remaining pile is empty, click it to turn the drawn cards back over and draw them again, as many times as you like.
+- When the remaining pile is empty, click it to turn the drawn cards back over and draw them again. You can do this **3 times** per game; after that, the drawn cards stay where they are.
 - The game ends when the board is cleared, or as soon as no match is possible (including with any card left in the remaining or drawn piles). The score screen then appears. The maximum score is **60,000**. A score above 35,000 shows "Good Lucky".
 
 ## Development
@@ -53,6 +53,19 @@ The Electron entry point is `electron/main.cjs`; the app icon is `build/icon.png
 | `src/game/sound.ts` | Sound effects (Web Audio, no files) |
 | `src/components/` | Board, cards, draw area, scoreboard, dialogs |
 
+## Branch workflow
+
+```
+feature/xyz ──PR──▶ dev ──PR──▶ main ──▶ GitHub Pages deploy
+```
+
+- **`dev`** is the default branch. All work is merged here.
+- Start new work from `dev`: `git switch dev && git pull && git switch -c feature/<name>`.
+- Push the branch and open a pull request into **`dev`**.
+- To release, open a pull request from **`dev`** into **`main`**.
+
+GitHub Actions (`.github/workflows/ci.yml`) checks every pull request into `dev` or `main` with lint, tests and a build. A pull request into `main` must come from `dev`, and it also builds the Windows `.exe` files, which you can download from the run's **Artifacts**. Merging into `main` deploys the web version.
+
 ## Deployment
 
-`.github/workflows/deploy.yml` builds, tests and publishes to GitHub Pages on every push to `main`. In the repository settings, enable it under **Settings → Pages → Source: GitHub Actions**.
+`.github/workflows/deploy.yml` builds, tests and publishes to GitHub Pages whenever `main` changes (after a release merge). In the repository settings, enable it under **Settings → Pages → Source: GitHub Actions**.
