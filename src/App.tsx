@@ -21,12 +21,14 @@ import { browserStore, loadGame, loadMuted, loadStats, saveGame, saveMuted, save
 import './App.css'
 
 const store = browserStore()
+/** How long the player must be idle with no match before the draw pile is suggested. */
+const DRAW_HINT_DELAY_MS = 5_000
 
 function init(): AppState {
   return { game: loadGame(store) ?? newGame(), stats: loadStats(store) }
 }
 
-function statusMessage(game: Game, hint: [Source, Source] | null): string {
+function statusMessage(game: Game, hint: [Source, Source] | null, showDrawHint: boolean): string {
   const state = status(game)
   if (state === 'won') return 'Board cleared — perfect game!'
   if (state === 'stuck') return 'No more matching cards — game over.'
@@ -38,8 +40,8 @@ function statusMessage(game: Game, hint: [Source, Source] | null): string {
   }
   if (e?.kind === 'resolve' && e.bonus) return `Position cleared: +${e.bonus.toLocaleString()}`
   if (hint) return 'Hint: the highlighted cards match.'
-  if (!findMatch(game) && !game.draw.length) return 'No matches — turn over the drawn cards to draw them again.'
-  if (!findMatch(game)) return 'No matches available — draw a card.'
+  if (showDrawHint && !game.draw.length) return 'No matches — turn over the drawn cards to draw them again.'
+  if (showDrawHint) return 'No matches available — draw a card.'
   return 'Select two cards with the same number.'
 }
 
@@ -49,6 +51,8 @@ export default function App() {
   const [muted, setMuted] = useState(() => loadMuted(store))
   const [confirming, setConfirming] = useState(false)
   const [resultHidden, setResultHidden] = useState(false)
+  // The game state that has sat untouched for DRAW_HINT_DELAY_MS.
+  const [idleGame, setIdleGame] = useState<Game | null>(null)
 
   const state = status(game)
   const over = state !== 'playing'
@@ -57,6 +61,11 @@ export default function App() {
   useEffect(() => saveGame(store, game), [game])
   useEffect(() => saveStats(store, stats), [stats])
   useEffect(() => saveMuted(store, muted), [muted])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIdleGame(game), DRAW_HINT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [game])
 
   // Matched cards animate first; input is blocked by the rules until they are removed.
   useEffect(() => {
@@ -106,6 +115,7 @@ export default function App() {
   const hideResult = useCallback(() => setResultHidden(true), [])
 
   const anyMatch = findMatch(game)
+  const showDrawHint = idleGame === game && !over && !game.matching && !anyMatch
 
   return (
     <main className="app">
@@ -126,14 +136,14 @@ export default function App() {
         </div>
       </header>
 
-      <p className="message" role="status">{statusMessage(game, hint)}</p>
+      <p className="message" role="status">{statusMessage(game, hint, showDrawHint)}</p>
 
       <Board game={game} hint={hint} onSelect={onSelect} />
 
       <DrawArea
         game={game}
         hint={hint}
-        nudge={!over && !game.matching && !anyMatch}
+        nudge={showDrawHint}
         onDraw={onDraw}
         onSelect={onSelect}
       />
