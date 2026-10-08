@@ -9,6 +9,7 @@ const GAME_KEY = 'stack-match:game:v1'
 const STATS_KEY = 'stack-match:stats:v1'
 const MUTED_KEY = 'stack-match:muted:v1'
 const SETTINGS_KEY = 'stack-match:settings:v1'
+const HELP_SEEN_KEY = 'stack-match:help-seen:v1'
 
 /** localStorage, or null when it is unavailable (private mode, blocked site data). */
 export function browserStore(): KeyValueStore | null {
@@ -113,3 +114,6 @@ export const saveMuted = (store: KeyValueStore | null, muted: boolean) => write(
 
 export const loadSettings = (store: KeyValueStore | null) => parseSettings(read(store, SETTINGS_KEY))
 export const saveSettings = (store: KeyValueStore | null, settings: Settings) => write(store, SETTINGS_KEY, settings)
+/** Whether the How to play guide has been shown once (it opens automatically on first launch). */
+export const loadHelpSeen = (store: KeyValueStore | null) => read(store, HELP_SEEN_KEY) === true
+export const saveHelpSeen = (store: KeyValueStore | null) => write(store, HELP_SEEN_KEY, true)

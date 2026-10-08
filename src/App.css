@@ -285,11 +285,31 @@ button.danger {
 .recycle-icon { font-size: calc(var(--card-w) * 0.38); line-height: 1; }
 .recycle-left { font-weight: 400; color: var(--muted); }
 
-.rules {
-  margin-top: 12px;
-  font-size: 0.82rem;
-  color: var(--muted);
-  text-align: center;
+.help {
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  margin: 8px 0 16px;
+  padding-right: 4px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.help h3 {
+  margin: 12px 0 4px;
+  font-size: 0.95rem;
+  color: #1f5f3f;
+}
+
+.help section:first-child h3 { margin-top: 0; }
+.help p, .help ul { margin: 0; }
+.help ul { padding-left: 20px; }
+.help li { margin: 2px 0; }
+
+.help-tip {
+  margin-top: 14px !important;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff3cf;
 }
 
 /* ---------- Modals ---------- */
