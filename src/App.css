@@ -299,6 +299,7 @@ button.danger {
 
 .recycle:hover { background: rgba(242, 193, 78, 0.15); }
 .recycle-icon { font-size: calc(var(--card-w) * 0.38); line-height: 1; }
+.recycle-left { font-weight: 400; color: var(--muted); }
 
 .rules {
   margin-top: 12px;

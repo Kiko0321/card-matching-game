@@ -78,6 +78,16 @@ describe('recovering from bad saved data', () => {
     expect(save(JSON.stringify(odd))).toBeNull()
   })
 
+  it('restores the turn-over count, defaulting old or invalid saves to 0', () => {
+    const data = valid()
+    data.turnOvers = 2
+    expect(save(JSON.stringify(data))?.turnOvers).toBe(2)
+    delete data.turnOvers
+    expect(save(JSON.stringify(data))?.turnOvers).toBe(0)
+    data.turnOvers = 7
+    expect(save(JSON.stringify(data))?.turnOvers).toBe(0)
+  })
+
   it('drops an invalid selection instead of rejecting the game', () => {
     const data = valid()
     data.selected = { kind: 'board', row: 9, col: 0 }

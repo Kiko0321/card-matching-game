@@ -7,6 +7,8 @@ export const BOARD_CARDS = ROWS * COLS * STACK_SIZE
 export const OUTER_BONUS = 1_000
 export const MIDDLE_BONUS = 10_000
 export const MAX_SCORE = COLS * (2 * OUTER_BONUS + MIDDLE_BONUS)
+/** How many times the drawn cards can be turned back over into the remaining pile. */
+export const MAX_TURN_OVERS = 3
 /** How long matched cards stay on screen (animating) before they are removed. */
 export const MATCH_DELAY_MS = 320
 
@@ -32,6 +34,8 @@ export type Game = {
   draw: Card[]
   /** Drawn cards, face up; only the last one is playable. */
   waste: Card[]
+  /** Times the drawn cards have been turned back over (up to MAX_TURN_OVERS). */
+  turnOvers: number
   selected: Source | null
   /** A successful match waiting to be removed. All input is ignored meanwhile. */
   matching: [Source, Source] | null
@@ -54,7 +58,7 @@ export function newGame(deck: Card[] = shuffle(createDeck())): Game {
       next += STACK_SIZE
     }
   }
-  return { board, draw: deck.slice(next), waste: [], selected: null, matching: null, event: null }
+  return { board, draw: deck.slice(next), waste: [], turnOvers: 0, selected: null, matching: null, event: null }
 }
 
 export const isMiddle = (row: number) => row === 1
@@ -106,14 +110,18 @@ export function findMatch(game: Game): [Source, Source] | null {
   return null
 }
 
+export const turnOversLeft = (game: Game) => MAX_TURN_OVERS - game.turnOvers
+
 /**
- * True when some card in the remaining or drawn pile could still match an exposed
- * board card. Without a match the board never changes, and only one drawn card is
- * playable at a time, so pile cards can only ever pair with today's exposed board cards.
+ * True when some card still reachable in the piles could match an exposed board
+ * card. Without a match the board never changes, and only one drawn card is playable
+ * at a time, so pile cards can only ever pair with today's exposed board cards.
+ * Drawn cards under the top are only reachable again if a turn-over is left.
  */
 function pilesCanHelp(game: Game): boolean {
   const exposed = new Set(availableSources(game).filter(s => s.kind === 'board').map(s => cardAt(game, s)!.rank))
-  return [...game.draw, ...game.waste].some(card => exposed.has(card.rank))
+  const reachable = turnOversLeft(game) > 0 ? [...game.draw, ...game.waste] : game.draw
+  return reachable.some(card => exposed.has(card.rank))
 }
 
 /** The game ends as soon as no match is possible, now or from any card left in the piles. */
@@ -166,16 +174,17 @@ export function resolveMatch(game: Game): Game {
  * Remaining-card rule (GAME-019/020): drawing turns the next remaining card face
  * up on the drawn pile, covering the previous one; only the top drawn card can be
  * matched. When the remaining pile is empty, clicking it turns the drawn pile back
- * over so the same cards can be drawn again in the same order (no limit).
+ * over so the same cards can be drawn again in the same order, up to MAX_TURN_OVERS times.
  */
 export function drawCard(game: Game): Game {
   if (game.matching || isOver(game)) return game
   if (!game.draw.length) {
-    if (!game.waste.length) return game
+    if (!game.waste.length || turnOversLeft(game) <= 0) return game
     return {
       ...game,
       draw: [...game.waste].reverse(),
       waste: [],
+      turnOvers: game.turnOvers + 1,
       selected: game.selected?.kind === 'waste' ? null : game.selected,
       event: withEvent(game, 'recycle'),
     }

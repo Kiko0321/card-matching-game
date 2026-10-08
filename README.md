@@ -11,7 +11,7 @@ A card-matching game built with React, TypeScript and Vite. It runs as a Windows
 - Clearing a top or bottom position scores **1,000**.
 - When both outer positions in a column are cleared, that column's middle position unlocks. Clearing it scores **10,000**.
 - When no match is showing, draw from the remaining cards. Each drawn card covers the previous one, and only the top drawn card can be used.
-- When the remaining pile is empty, click it to turn the drawn cards back over and draw them again, as many times as you like.
+- When the remaining pile is empty, click it to turn the drawn cards back over and draw them again. You can do this **3 times** per game; after that, the drawn cards stay where they are.
 - The game ends when the board is cleared, or as soon as no match is possible (including with any card left in the remaining or drawn piles). The score screen then appears. The maximum score is **60,000**. A score above 35,000 shows "Good Lucky".
 
 ## Development

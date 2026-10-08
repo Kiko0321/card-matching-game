@@ -4,6 +4,7 @@ import {
   BOARD_CARDS,
   COLS,
   MAX_SCORE,
+  MAX_TURN_OVERS,
   ROWS,
   cardAt,
   drawCard,
@@ -179,6 +180,20 @@ describe('remaining cards', () => {
     expect(drawCard(recycled).waste).toEqual([start.draw.at(-1)])
   })
 
+  it('allows only 3 turn-overs per game', () => {
+    const drawAll = (g: Game) => { while (g.draw.length) g = drawCard(g); return g }
+    let game = start
+    for (let i = 0; i < MAX_TURN_OVERS; i++) {
+      game = drawAll(game)
+      game = drawCard(game)
+      expect(game.turnOvers).toBe(i + 1)
+      expect(game.waste).toHaveLength(0)
+    }
+    game = drawAll(game)
+    expect(MAX_TURN_OVERS).toBe(3)
+    expect(drawCard(game)).toBe(game)
+  })
+
   it('does nothing when both piles are empty', () => {
     const empty = { ...start, draw: [], waste: [] }
     expect(drawCard(empty)).toBe(empty)
@@ -207,6 +222,9 @@ describe('game end', () => {
     const useful = { id: 99, rank: 1, suit: 3 }
     expect(status({ ...noPairs, draw: [...kings, useful] })).toBe('playing')
     expect(status({ ...noPairs, draw: [], waste: [useful, ...kings] })).toBe('playing')
+    // ...but not once the turn-overs are used up: a buried drawn card can't come back.
+    expect(status({ ...noPairs, draw: [], waste: [useful, ...kings], turnOvers: MAX_TURN_OVERS })).toBe('stuck')
+    expect(status({ ...noPairs, draw: [useful], waste: kings, turnOvers: MAX_TURN_OVERS })).toBe('playing')
   })
 
   it('keeps playing while a match is still available', () => {
