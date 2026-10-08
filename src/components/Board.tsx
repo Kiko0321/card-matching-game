@@ -1,5 +1,5 @@
 import { cardName } from '../game/deck'
-import { COLS, ROWS, bonusFor, isMiddle, isUnlocked, sameSource, type Game, type Source } from '../game/rules'
+import { COLS, ROWS, isMiddle, isUnlocked, sameSource, type Game, type Source } from '../game/rules'
 import { PlayingCard } from './PlayingCard'
 
 type Props = {
@@ -22,16 +22,12 @@ export function Board({ game, hint, onSelect }: Props) {
           const unlocked = isUnlocked(game.board, row, col)
           const src: Source = { kind: 'board', row, col }
           const name = `${ROW_NAMES[row]} row, column ${col + 1}`
-          const bonus = bonusFor(row).toLocaleString()
           const justUnlocked = isMiddle(row) && event?.unlocked.includes(col)
 
           return (
             <div key={`${row}-${col}`} className={`slot ${isMiddle(row) ? 'middle' : 'outer'} ${unlocked ? 'unlocked' : 'locked'}`}>
               {!top ? (
-                <div className="cleared" aria-label={`${name}: cleared`}>
-                  <span>✓</span>
-                  <span>{bonus}</span>
-                </div>
+                <div className="cleared" aria-label={`${name}: cleared`}>✓</div>
               ) : unlocked ? (
                 <PlayingCard
                   key={top.id}
@@ -52,7 +48,6 @@ export function Board({ game, hint, onSelect }: Props) {
                 </PlayingCard>
               )}
               {justUnlocked && <span key={event!.id} className="unlock-glow" aria-hidden />}
-              <span className="value">{top ? bonus : ''}</span>
             </div>
           )
         }),
