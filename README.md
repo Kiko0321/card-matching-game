@@ -1,6 +1,6 @@
 # Stack Match
 
-A card-matching game built with React, TypeScript and Vite. It has no backend; progress and stats are saved in the browser.
+A card-matching game built with React, TypeScript and Vite. It runs as a Windows desktop app (Electron) or in a browser. There is no backend; progress and stats are saved locally.
 
 ## How to play
 
@@ -22,6 +22,23 @@ npm test         # run unit tests
 npm run lint
 npm run build    # production build in dist/
 ```
+
+## Windows desktop app
+
+```sh
+npm run app       # build and open the game in a desktop window
+npm run app:dev   # desktop window with hot reload while developing
+npm run dist:win  # build the Windows packages into release/
+```
+
+`npm run dist:win` creates two files in `release/`:
+
+- `Stack Match-Setup-1.0.0.exe` — installer with Start menu and desktop shortcuts
+- `Stack Match-Portable-1.0.0.exe` — runs directly, no install
+
+The executables are not code-signed, so Windows SmartScreen may show "Windows protected your PC" on first launch; choose **More info → Run anyway**.
+
+The Electron entry point is `electron/main.cjs`; the app icon is `build/icon.png`.
 
 ## Project layout
 
