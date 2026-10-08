@@ -4,6 +4,7 @@ import { ConfirmDialog } from './components/ConfirmDialog'
 import { DrawArea } from './components/DrawArea'
 import { ResultModal } from './components/ResultModal'
 import { ScoreBoard } from './components/ScoreBoard'
+import { SettingsDialog } from './components/SettingsDialog'
 import { appReducer, hasProgress, type AppState } from './game/appState'
 import {
   MATCH_DELAY_MS,
@@ -17,7 +18,7 @@ import {
 } from './game/rules'
 import { playSound } from './game/sound'
 import { isGoodResult } from './game/stats'
-import { browserStore, loadGame, loadMuted, loadStats, saveGame, saveMuted, saveStats } from './game/storage'
+import { browserStore, loadGame, loadMuted, loadSettings, loadStats, saveGame, saveMuted, saveSettings, saveStats } from './game/storage'
 import './App.css'
 
 const store = browserStore()
@@ -47,6 +48,8 @@ export default function App() {
   const [{ game, stats }, dispatch] = useReducer(appReducer, undefined, init)
   const [hint, setHint] = useState<[Source, Source] | null>(null)
   const [muted, setMuted] = useState(() => loadMuted(store))
+  const [settings, setSettings] = useState(() => loadSettings(store))
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [resultHidden, setResultHidden] = useState(false)
 
@@ -57,6 +60,16 @@ export default function App() {
   useEffect(() => saveGame(store, game), [game])
   useEffect(() => saveStats(store, stats), [stats])
   useEffect(() => saveMuted(store, muted), [muted])
+
+  // Settings are applied as attributes on <html>, which the stylesheets key off.
+  useEffect(() => {
+    saveSettings(store, settings)
+    const root = document.documentElement.dataset
+    root.cardStyle = settings.cardStyle
+    root.cardBack = settings.cardBack
+    root.table = settings.table
+    root.animations = settings.animations ? 'on' : 'off'
+  }, [settings])
 
   // Matched cards animate first; input is blocked by the rules until they are removed.
   useEffect(() => {
@@ -104,6 +117,7 @@ export default function App() {
   }
   const cancelConfirm = useCallback(() => setConfirming(false), [])
   const hideResult = useCallback(() => setResultHidden(true), [])
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
 
   const anyMatch = findMatch(game)
 
@@ -119,6 +133,7 @@ export default function App() {
           <button type="button" onClick={() => setMuted(m => !m)} aria-pressed={muted} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? '🔇' : '🔊'}
           </button>
+          <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Settings">⚙</button>
           {over && resultHidden && (
             <button type="button" onClick={() => setResultHidden(false)}>Result</button>
           )}
@@ -148,6 +163,15 @@ export default function App() {
         <ResultModal score={score} won={state === 'won'} stats={stats} onNewGame={startNewGame} onClose={hideResult} />
       )}
       {confirming && <ConfirmDialog onConfirm={startNewGame} onCancel={cancelConfirm} />}
+      {settingsOpen && (
+        <SettingsDialog
+          settings={settings}
+          muted={muted}
+          onChange={setSettings}
+          onMutedChange={setMuted}
+          onClose={closeSettings}
+        />
+      )}
     </main>
   )
 }

@@ -1,5 +1,6 @@
 import { COPIES_PER_RANK, DECK_SIZE, RANKS, SUITS } from './deck'
 import { COLS, ROWS, STACK_SIZE, resolveMatch, type Card, type Game, type Source } from './rules'
+import { parseSettings, type Settings } from './settings'
 import { EMPTY_STATS, type Stats } from './stats'
 
 export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
@@ -7,6 +8,7 @@ export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const GAME_KEY = 'stack-match:game:v1'
 const STATS_KEY = 'stack-match:stats:v1'
 const MUTED_KEY = 'stack-match:muted:v1'
+const SETTINGS_KEY = 'stack-match:settings:v1'
 
 /** localStorage, or null when it is unavailable (private mode, blocked site data). */
 export function browserStore(): KeyValueStore | null {
@@ -106,3 +108,6 @@ export const saveStats = (store: KeyValueStore | null, stats: Stats) => write(st
 
 export const loadMuted = (store: KeyValueStore | null) => read(store, MUTED_KEY) === true
 export const saveMuted = (store: KeyValueStore | null, muted: boolean) => write(store, MUTED_KEY, muted)
+
+export const loadSettings = (store: KeyValueStore | null) => parseSettings(read(store, SETTINGS_KEY))
+export const saveSettings = (store: KeyValueStore | null, settings: Settings) => write(store, SETTINGS_KEY, settings)
