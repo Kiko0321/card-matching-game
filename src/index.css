@@ -37,3 +37,15 @@ button:focus-visible {
 }
 
 h1, h2 { margin: 0; }
+
+/* ---------- Settings: table ---------- */
+
+:root[data-table='blue'] { --felt: #1d4a73; --felt-dark: #0f2a45; }
+:root[data-table='burgundy'] { --felt: #5e1f2b; --felt-dark: #341018; }
+:root[data-table='dark'] { --felt: #2c3036; --felt-dark: #15171a; --muted: #a9b0b8; }
+
+/* ---------- Settings: card back ---------- */
+
+:root[data-card-back='blue'] { --back: #24508f; --back-dark: #1b3e70; }
+:root[data-card-back='green'] { --back: #2f6b3a; --back-dark: #22512b; }
+:root[data-card-back='purple'] { --back: #5b3a8c; --back-dark: #462c6d; }
